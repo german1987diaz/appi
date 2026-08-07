@@ -3332,7 +3332,7 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
     <button class="ds-btn" data-ds="view-planning" onclick="showView('view-planning'); renderPlanningTools();"><span>🗓️</span> Planificación</button>
     <button class="ds-btn" data-ds="view-history" onclick="showView('view-history'); renderHistory();"><span>📜</span> Historial</button>
   </nav>
-  <div class="ds-foot">APPI · v135 · Organigrama infinito - navegable zoom pan + color categoria + todos datos + menu bloqueado</div>
+  <div class="ds-foot">APPI · v136 · Arbol vuelve a lista simple - infinito solo para compartir + menu bloqueado</div>
 </aside>
 <!-- Botón flotante para reabrir la barra (cuando está oculta) - oculto, reemplazado por nuevo -->
 <button class="ds-reopen" style="display:none !important" id="dsReopenBtn" onclick="toggleSidebar()" title="Abrir barra lateral" aria-label="Abrir barra lateral">☰</button>
@@ -6479,147 +6479,15 @@ ${(function(){
     };
   });
 }
-let orgChartScale=1;
-let orgChartPan={x:0,y:0};
-
 function renderEquipoArbol(){
   const cont = document.getElementById('equipoContent');
   const titulo = `<div style="display:flex;align-items:center;gap:10px;margin:8px 4px 12px">
     <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(80,90,130,0.25),transparent)"></div>
-    <h3 class="eq-base-title">🌳 Equipo Base - Organigrama Infinito</h3>
+    <h3 class="eq-base-title">🌳 Equipo Base</h3>
     <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(80,90,130,0.25),transparent)"></div>
   </div>`;
-  const totalPersonas = equipoData.personas.length;
-  const totalRamas = equipoData.raices.length;
-  const infoBar = `<div style="display:flex;gap:8px;margin:0 4px 12px;flex-wrap:wrap">
-    <span style="padding:6px 10px;border-radius:999px;background:rgba(91,141,239,0.10);border:1px solid rgba(91,141,239,0.15);font-size:11px;font-weight:700">👥 ${totalPersonas} personas</span>
-    <span style="padding:6px 10px;border-radius:999px;background:rgba(58,208,164,0.10);border:1px solid rgba(58,208,164,0.15);font-size:11px;font-weight:700">🌳 ${totalRamas} ramas</span>
-    <span style="padding:6px 10px;border-radius:999px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.06);font-size:11px;font-weight:600">🎨 Color = categoría</span>
-    <span style="padding:6px 10px;border-radius:999px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.06);font-size:11px;font-weight:600">🖱️ Arrastrá para navegar · Scroll para zoom</span>
-  </div>`;
-
-  cont.innerHTML = titulo + infoBar + `
-    <div class="orgchart" id="orgchartMain" style="cursor:grab; user-select:none;">
-      <div class="org-zoom-bar">
-        <button class="org-zoom-btn" id="btnZoomOut" title="Alejar">−</button>
-        <button class="org-zoom-btn" id="btnZoomReset" title="Centrar y 100%">⌖</button>
-        <button class="org-zoom-btn" id="btnZoomIn" title="Acercar">+</button>
-      </div>
-      <div id="orgchartInner" style="display:flex; flex-direction:column; align-items:center; gap:16px; min-width:max-content; transform-origin: top center; transition: transform .15s ease;">
-        ${equipoData.raices.map(p=>renderTreeNodeOrg(p)).join('')}
-      </div>
-    </div>
-    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
-      <button class="btn btn-secondary" onclick="document.getElementById('orgchartMain').scrollTo({top:0, left:0, behavior:'smooth'}); orgChartScale=1; document.getElementById('orgchartInner').style.transform='scale(1)';">⌖ Centrar</button>
-      <button class="btn btn-secondary" onclick="expandirTodoArbol()">🌳 Expandir todo</button>
-      <button class="btn btn-secondary" onclick="colapsarTodoArbol()">📁 Colapsar todo</button>
-    </div>
-  `;
+  cont.innerHTML = titulo + `<div id="treeContainer">${renderTreeListaHTML()}</div>`;
   bindTreeEvents();
-  initOrgChartInfinite();
-}
-
-function expandirTodoArbol(){
-  if(!equipoData) return;
-  const recorrer=(p)=>{ equipoExpanded.add(p.id); (p.hijos||[]).forEach(recorrer); };
-  equipoData.raices.forEach(recorrer);
-  renderEquipoArbol();
-  haptic(10);
-}
-function colapsarTodoArbol(){
-  equipoExpanded.clear();
-  renderEquipoArbol();
-  haptic(10);
-}
-
-function initOrgChartInfinite(){
-  const container=document.getElementById('orgchartMain');
-  const inner=document.getElementById('orgchartInner');
-  if(!container || !inner) return;
-
-  // Reset scale
-  orgChartScale=1;
-  inner.style.transform=`scale(${orgChartScale})`;
-
-  // Zoom buttons
-  const btnIn=document.getElementById('btnZoomIn');
-  const btnOut=document.getElementById('btnZoomOut');
-  const btnReset=document.getElementById('btnZoomReset');
-  if(btnIn) btnIn.onclick=()=>{
-    orgChartScale=Math.min(2.0, orgChartScale+0.15);
-    inner.style.transform=`scale(${orgChartScale})`;
-    haptic(5);
-  };
-  if(btnOut) btnOut.onclick=()=>{
-    orgChartScale=Math.max(0.35, orgChartScale-0.15);
-    inner.style.transform=`scale(${orgChartScale})`;
-    haptic(5);
-  };
-  if(btnReset) btnReset.onclick=()=>{
-    orgChartScale=1;
-    inner.style.transform=`scale(${orgChartScale})`;
-    container.scrollTo({top:0, left:0, behavior:'smooth'});
-    haptic(8);
-  };
-
-  // Wheel zoom con Ctrl o pinch
-  container.addEventListener('wheel', (e)=>{
-    if(e.ctrlKey || e.metaKey){
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.08 : 0.08;
-      orgChartScale=Math.min(2.5, Math.max(0.25, orgChartScale+delta));
-      inner.style.transform=`scale(${orgChartScale})`;
-    }
-  }, {passive:false});
-
-  // Pan con drag
-  let isDragging=false, startX=0, startY=0, scrollLeft=0, scrollTop=0;
-  container.addEventListener('mousedown', (e)=>{
-    if(e.target.closest('.org-node')) return; // No arrastrar si clickea nodo
-    isDragging=true;
-    container.style.cursor='grabbing';
-    startX=e.pageX - container.offsetLeft;
-    startY=e.pageY - container.offsetTop;
-    scrollLeft=container.scrollLeft;
-    scrollTop=container.scrollTop;
-  });
-  const stopDragging=()=>{
-    isDragging=false;
-    container.style.cursor='grab';
-  };
-  window.addEventListener('mouseup', stopDragging);
-  container.addEventListener('mouseleave', stopDragging);
-  container.addEventListener('mousemove', (e)=>{
-    if(!isDragging) return;
-    e.preventDefault();
-    const x=e.pageX - container.offsetLeft;
-    const y=e.pageY - container.offsetTop;
-    const walkX=(x-startX)*1.2;
-    const walkY=(y-startY)*1.2;
-    container.scrollLeft=scrollLeft - walkX;
-    container.scrollTop=scrollTop - walkY;
-  });
-
-  // Touch pan
-  let touchStartX=0, touchStartY=0;
-  container.addEventListener('touchstart', (e)=>{
-    if(e.touches.length===1){
-      touchStartX=e.touches[0].pageX - container.offsetLeft;
-      touchStartY=e.touches[0].pageY - container.offsetTop;
-      scrollLeft=container.scrollLeft;
-      scrollTop=container.scrollTop;
-    }
-  }, {passive:true});
-  container.addEventListener('touchmove', (e)=>{
-    if(e.touches.length===1){
-      const x=e.touches[0].pageX - container.offsetLeft;
-      const y=e.touches[0].pageY - container.offsetTop;
-      const walkX=(x-touchStartX)*1.2;
-      const walkY=(y-touchStartY)*1.2;
-      container.scrollLeft=scrollLeft - walkX;
-      container.scrollTop=scrollTop - walkY;
-    }
-  }, {passive:true});
 }
 
 function renderTreeListaHTML(){
