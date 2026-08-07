@@ -3304,7 +3304,7 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
     <button class="ds-btn" data-ds="view-planning" onclick="showView('view-planning'); renderPlanningTools();"><span>🗓️</span> Planificación</button>
     <button class="ds-btn" data-ds="view-history" onclick="showView('view-history'); renderHistory();"><span>📜</span> Historial</button>
   </nav>
-  <div class="ds-foot">APPI · v124 · AUDITORIA COMPLETA - fix python slice SyntaxError + window.cargarArchivoU global + upload 100% + menu bloqueado</div>
+  <div class="ds-foot">APPI · v125 · FIX recuadro cargar garantia desaparece al cargar + boton cambiar archivo + upload 100% + menu bloqueado</div>
 </aside>
 <!-- Botón flotante para reabrir la barra (cuando está oculta) - oculto, reemplazado por nuevo -->
 <button class="ds-reopen" style="display:none !important" id="dsReopenBtn" onclick="toggleSidebar()" title="Abrir barra lateral" aria-label="Abrir barra lateral">☰</button>
@@ -4072,6 +4072,7 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
         <div id="usuariosActiveFilters" style="display:none;margin-top:10px;padding:10px 14px;border-radius:12px;background:rgba(91,141,239,0.10);border:1px solid rgba(91,141,239,0.18);font-size:12px;font-weight:600;color:#3a3a48"></div>
         <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
           <button class="btn btn-primary" id="usuariosBtnVerTodos" style="display:none;background:linear-gradient(135deg,#5b8def,#a06bff);color:#fff;border:none;box-shadow:0 4px 12px rgba(91,141,239,0.30)">📋 Ver listado completo</button>
+          <button class="btn btn-secondary" id="usuariosBtnCambiarArchivo">📂 Cambiar archivo</button>
           <button class="btn btn-secondary" id="usuariosBtnOrdenVence">📅 Ordenar por Vence</button>
           <button class="btn btn-secondary" id="usuariosBtnMapAll">🗺️ Mapa general</button>
           <button class="btn btn-secondary" id="usuariosBtnExport">📤 Exportar CSV</button>
@@ -12809,6 +12810,9 @@ if(window._pendingFile){
 function mostrarDashboardU(){
   const dash=document.getElementById('usuariosDashboard');
   if(dash) dash.style.display='block';
+  // OCULTAR recuadro de cargar garantia una vez cargado (pedido usuario)
+  const upCard=document.getElementById('usuariosUploadCard');
+  if(upCard) upCard.style.display='none';
   const totalEl=document.getElementById('usuariosStTotal');
   if(totalEl) totalEl.textContent=usuariosU.length;
   const vencEl=document.getElementById('usuariosStVencidas');
@@ -12882,12 +12886,29 @@ function initUsuarios(){
       usuariosU=[]; filtradosU=[];
       const dash=document.getElementById('usuariosDashboard');
       if(dash) dash.style.display='none';
+      const upCard=document.getElementById('usuariosUploadCard');
+      if(upCard) upCard.style.display='block';
       const info=document.getElementById('usuariosFileInfo');
       if(info) info.style.display='none';
       btnClear.style.display='none';
+      const debugEl=document.getElementById('usuariosDebug');
+      if(debugEl) debugEl.style.display='none';
       const list=document.getElementById('usuariosList');
       if(list) list.innerHTML='';
+      // Limpiar mapa
+      try{ markersU.forEach(m=>mapU && mapU.removeLayer(m)); markersU=[]; }catch(e){}
+      const mapDiv=document.getElementById('usuariosMap');
+      if(mapDiv){ mapDiv.classList.remove('show'); mapDiv.style.display='none'; }
     }
+  };
+  const btnCambiar=document.getElementById('usuariosBtnCambiarArchivo');
+  if(btnCambiar) btnCambiar.onclick=()=>{
+    const upCard=document.getElementById('usuariosUploadCard');
+    if(upCard){
+      upCard.style.display='block';
+      upCard.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    if(typeof haptic==='function') haptic(10);
   };
   const search=document.getElementById('usuariosSearch');
   if(search) search.oninput=()=>aplicarFiltrosU();
