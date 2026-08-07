@@ -3304,7 +3304,7 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
     <button class="ds-btn" data-ds="view-planning" onclick="showView('view-planning'); renderPlanningTools();"><span>🗓️</span> Planificación</button>
     <button class="ds-btn" data-ds="view-history" onclick="showView('view-history'); renderHistory();"><span>📜</span> Historial</button>
   </nav>
-  <div class="ds-foot">APPI · v125 · FIX recuadro cargar garantia desaparece al cargar + boton cambiar archivo + upload 100% + menu bloqueado</div>
+  <div class="ds-foot">APPI · v126 · Mapa general a derecha + Limpiar Busqueda titilando + sin boton limpiar filtro viejo</div>
 </aside>
 <!-- Botón flotante para reabrir la barra (cuando está oculta) - oculto, reemplazado por nuevo -->
 <button class="ds-reopen" style="display:none !important" id="dsReopenBtn" onclick="toggleSidebar()" title="Abrir barra lateral" aria-label="Abrir barra lateral">☰</button>
@@ -4074,8 +4074,8 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
           <button class="btn btn-primary" id="usuariosBtnVerTodos" style="display:none;background:linear-gradient(135deg,#5b8def,#a06bff);color:#fff;border:none;box-shadow:0 4px 12px rgba(91,141,239,0.30)">📋 Ver listado completo</button>
           <button class="btn btn-secondary" id="usuariosBtnCambiarArchivo">📂 Cambiar archivo</button>
           <button class="btn btn-secondary" id="usuariosBtnOrdenVence">📅 Ordenar por Vence</button>
-          <button class="btn btn-secondary" id="usuariosBtnMapAll">🗺️ Mapa general</button>
           <button class="btn btn-secondary" id="usuariosBtnExport">📤 Exportar CSV</button>
+          <button class="btn btn-secondary" id="usuariosBtnMapAll" style="margin-left:auto">🗺️ Mapa general</button>
         </div>
         <div id="usuariosMap" class="map-wrap"></div>
       </div>
@@ -11172,6 +11172,14 @@ body.dark .search-box input{color:#ffffff !important}
   transform:translateY(-1px);
   box-shadow:0 8px 20px rgba(91,141,239,0.15);
 }
+@keyframes blinkSoft{
+  0%, 100% { opacity:1; transform:scale(1); box-shadow:0 4px 14px rgba(255,107,107,0.35); }
+  50% { opacity:0.92; transform:scale(1.03); box-shadow:0 8px 22px rgba(255,107,107,0.50); }
+}
+.blink-soft{
+  animation: blinkSoft 1.4s ease-in-out infinite;
+}
+
 #view-usuarios .upload-zone.dragover{
   background:rgba(91,141,239,0.14);
   border-color:#5b8def;
@@ -12315,9 +12323,10 @@ function aplicarFiltrosU(){
       return ordenAscU? a.fVence - b.fVence : b.fVence - a.fVence;
     });
   }
-  // Mostrar banner de filtros activos y boton Ver Todos
+  // Mostrar banner de filtros activos y transformar boton Mapa general -> Limpiar Busqueda
   const activeDiv=document.getElementById('usuariosActiveFilters');
   const btnVerTodos=document.getElementById('usuariosBtnVerTodos');
+  const btnMapAll=document.getElementById('usuariosBtnMapAll');
   const isFiltered = filtroVencU!=='all' || filtroZonaU!=='all' || q;
   if(activeDiv){
     if(isFiltered){
@@ -12328,7 +12337,8 @@ function aplicarFiltrosU(){
         parts.push(labels[filtroVencU]||filtroVencU);
       }
       if(q) parts.push(`🔍 "${qEl.value}"`);
-      activeDiv.innerHTML=`🔎 Filtrando ${filtradosU.length} de ${usuariosU.length} usuarios → ${parts.join(' · ')} <button onclick="resetFiltrosU()" style="margin-left:8px;border:none;background:#fff;padding:4px 10px;border-radius:999px;font-weight:800;font-size:11px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.10)">✕ Limpiar</button>`;
+      // Sin boton Limpiar interno (pedido: quitalo, no funciona) - solo texto
+      activeDiv.innerHTML=`🔎 Filtrando ${filtradosU.length} de ${usuariosU.length} → ${parts.join(' · ')}`;
       activeDiv.style.display='block';
     }else{
       activeDiv.style.display='none';
@@ -12336,6 +12346,55 @@ function aplicarFiltrosU(){
   }
   if(btnVerTodos){
     btnVerTodos.style.display=isFiltered?'inline-flex':'none';
+  }
+  // Transformar boton Mapa general -> Limpiar Busqueda cuando hay filtro, con titilado suave
+  if(btnMapAll){
+    if(isFiltered){
+      // Guardar handler original de mapa si no existe
+      if(!btnMapAll.dataset.origText){
+        btnMapAll.dataset.origText=btnMapAll.textContent;
+        btnMapAll.dataset.origOnclick='map';
+      }
+      btnMapAll.textContent='🧹 LIMPIAR BUSQUEDA';
+      btnMapAll.classList.add('blink-soft','btn-primary');
+      btnMapAll.classList.remove('btn-secondary');
+      btnMapAll.style.marginLeft='auto';
+      btnMapAll.style.background='linear-gradient(135deg,#ff6b6b,#ff8f6b)';
+      btnMapAll.style.color='#fff';
+      btnMapAll.style.border='none';
+      btnMapAll.style.boxShadow='0 4px 14px rgba(255,107,107,0.35)';
+      btnMapAll.onclick=()=>{ resetFiltrosU(); };
+    }else{
+      btnMapAll.textContent=btnMapAll.dataset.origText||'🗺️ Mapa general';
+      btnMapAll.classList.remove('blink-soft','btn-primary');
+      btnMapAll.classList.add('btn-secondary');
+      btnMapAll.style.background='';
+      btnMapAll.style.color='';
+      btnMapAll.style.border='';
+      btnMapAll.style.boxShadow='';
+      btnMapAll.style.marginLeft='auto';
+      // Restaurar handler original de mapa
+      btnMapAll.onclick=()=>{
+        const mapDiv=document.getElementById('usuariosMap');
+        if(mapDiv){
+          const willShow=!mapDiv.classList.contains('show');
+          mapDiv.classList.toggle('show');
+          if(willShow){
+            mapDiv.style.display='block';
+            mapDiv.style.height='420px';
+            if(!mapU){
+              try{
+                mapU=L.map('usuariosMap',{zoomControl:true}).setView([-31.4201,-64.1888],12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap', maxZoom:19}).addTo(mapU);
+              }catch(e){ console.log('map init fail',e); }
+            }
+            setTimeout(()=>{ try{ if(mapU) mapU.invalidateSize(true); }catch(e){} },150);
+            setTimeout(()=>{ try{ if(mapU) mapU.invalidateSize(true); }catch(e){} },500);
+            setTimeout(()=>{ try{ if(mapU) mapU.invalidateSize(true); }catch(e){} },1200);
+          }
+        }
+      };
+    }
   }
   renderListU();
 }
