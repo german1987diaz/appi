@@ -3332,7 +3332,7 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
     <button class="ds-btn" data-ds="view-planning" onclick="showView('view-planning'); renderPlanningTools();"><span>🗓️</span> Planificación</button>
     <button class="ds-btn" data-ds="view-history" onclick="showView('view-history'); renderHistory();"><span>📜</span> Historial</button>
   </nav>
-  <div class="ds-foot">APPI · v132 · Organigramas Apple - nodos glass + zoom + lineas suaves + menu bloqueado</div>
+  <div class="ds-foot">APPI · v133 · Compartir datos unificado (mi equipo + distribuidor en 1 boton) + menu bloqueado</div>
 </aside>
 <!-- Botón flotante para reabrir la barra (cuando está oculta) - oculto, reemplazado por nuevo -->
 <button class="ds-reopen" style="display:none !important" id="dsReopenBtn" onclick="toggleSidebar()" title="Abrir barra lateral" aria-label="Abrir barra lateral">☰</button>
@@ -7135,23 +7135,96 @@ async function enviarMensajeWhatsApp(mensaje, titulo){
   window.open('https://wa.me/?text=' + encodeURIComponent(mensaje), '_blank');
 }
 
-// Menú principal: elegir tipo de compartir
+// Menú principal: compartir datos unificado + imagen
+function generarMensajeUnificadoEquipoYDistribuidor(persona){
+  // Combina datos de mi equipo + datos del distribuidor seleccionado
+  const teamMsg = generarMensajeMiEquipo();
+  const distMsg = generarMensajeCombinado(persona);
+  return `${teamMsg}\n\n━━━━━━━━━━━━━━━\n\n${distMsg}`;
+}
+
+function abrirSelectorParaCompartirDatos(){
+  const personasOrdenadas = [...equipoData.personas].filter(p => !p.esTitular).sort((a,b) => {
+    const da = contarDescendientes(a);
+    const db = contarDescendientes(b);
+    if(db !== da) return db - da;
+    return a.nombre.localeCompare(b.nombre);
+  });
+  
+  const renderLista = (filtro='') => {
+    const f = normalize(filtro);
+    const lista = personasOrdenadas.filter(p => 
+      !f || normalize(p.nombre).includes(f) || (p.codigo||'').toLowerCase().includes(f)
+    ).slice(0, 100);
+    if(lista.length === 0){
+      return '<div class="empty" style="padding:20px">🔍 Sin coincidencias</div>';
+    }
+    return lista.map(p => {
+      const info = catInfoOf(p.cat);
+      const desc = contarDescendientes(p);
+      return `
+        <div class="person-picker-item" data-pid="${p.id}">
+          <span class="pp-cat" style="background:${info.color}">${info.name}</span>
+          <div class="pp-info">
+            <div class="pp-name">${escapeXml(p.nombre)}</div>
+            <div class="pp-meta">${(p.codigo||'') + ' · ' + desc + ' descendiente' + (desc===1?'':'s')}</div>
+          </div>
+          <span class="pp-count">${desc + 1} pers</span>
+        </div>
+      `;
+    }).join('');
+  };
+  
+  const html = `
+    <p style="margin:0 0 12px; font-size:13px; color:#5c5c66">
+      Elegí el distribuidor para compartir <b>datos de tu equipo + sus datos</b> juntos.
+    </p>
+    <div class="person-picker-search">
+      <span style="color:#8a8a94">🔍</span>
+      <input type="text" id="pickerSearchUnificado" placeholder="Buscar por nombre o N°..." />
+    </div>
+    <div class="person-picker-list" id="pickerListUnificado">
+      ${renderLista()}
+    </div>
+  `;
+  modal.open({
+    icon:'📊', iconBg:'linear-gradient(135deg,#25D366,#128C7E)',
+    title:'Compartir datos', sub:'Mi equipo + distribuidor',
+    html
+  });
+  setTimeout(()=>{
+    const inp = document.getElementById('pickerSearchUnificado');
+    const cont = document.getElementById('pickerListUnificado');
+    if(inp){
+      inp.oninput = e => { cont.innerHTML = renderLista(e.target.value); bindUnificadoClicks(); };
+      inp.focus();
+    }
+    bindUnificadoClicks();
+  }, 50);
+  
+  function bindUnificadoClicks(){
+    document.querySelectorAll('#pickerListUnificado .person-picker-item').forEach(el=>{
+      el.onclick = ()=>{
+        const pid = +el.dataset.pid;
+        const p = equipoData.personas.find(x => x.id === pid);
+        if(!p) return;
+        modal.close();
+        haptic(15);
+        const mensajeFinal = generarMensajeUnificadoEquipoYDistribuidor(p);
+        enviarMensajeWhatsApp(mensajeFinal, 'Datos: Mi equipo + ' + p.nombre.split(',')[0].trim());
+      };
+    });
+  }
+}
+
 document.getElementById('btnEquipoShare').onclick = ()=>{
   if(!equipoData) return;
   const html = `
-    <button class="share-menu-item" id="smText">
-      <div class="sm-ico" style="background:linear-gradient(135deg,#25D366,#128C7E)">💬</div>
+    <button class="share-menu-item" id="smDatos">
+      <div class="sm-ico" style="background:linear-gradient(135deg,#25D366,#128C7E)">📊</div>
       <div class="sm-txt">
-        <div class="sm-title">Datos de mi equipo</div>
-        <div class="sm-desc">Resumen general por WhatsApp</div>
-      </div>
-      <span class="sm-arrow">›</span>
-    </button>
-    <button class="share-menu-item" id="smDistribuidor">
-      <div class="sm-ico" style="background:linear-gradient(135deg,#f5b301,#ff8f6b)">👤</div>
-      <div class="sm-txt">
-        <div class="sm-title">Datos de un distribuidor</div>
-        <div class="sm-desc">Elegí a alguien de tu equipo</div>
+        <div class="sm-title">Compartir datos</div>
+        <div class="sm-desc">Datos de mi equipo + datos de un distribuidor</div>
       </div>
       <span class="sm-arrow">›</span>
     </button>
@@ -7170,11 +7243,9 @@ document.getElementById('btnEquipoShare').onclick = ()=>{
     html
   });
   setTimeout(()=>{
-    const bt = document.getElementById('smText');
-    const bd = document.getElementById('smDistribuidor');
+    const bd = document.getElementById('smDatos');
     const bi = document.getElementById('smImage');
-    if(bt) bt.onclick = ()=>{ modal.close(); haptic(10); enviarMensajeWhatsApp(generarMensajeMiEquipo(), 'Mi Equipo'); };
-    if(bd) bd.onclick = ()=>{ modal.close(); haptic(10); abrirSelectorDistribuidor(); };
+    if(bd) bd.onclick = ()=>{ modal.close(); haptic(10); abrirSelectorParaCompartirDatos(); };
     if(bi) bi.onclick = ()=>{ modal.close(); haptic(10); abrirSelectorPersona(); };
   }, 50);
 };
