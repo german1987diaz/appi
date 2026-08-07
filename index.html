@@ -3332,7 +3332,7 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
     <button class="ds-btn" data-ds="view-planning" onclick="showView('view-planning'); renderPlanningTools();"><span>🗓️</span> Planificación</button>
     <button class="ds-btn" data-ds="view-history" onclick="showView('view-history'); renderHistory();"><span>📜</span> Historial</button>
   </nav>
-  <div class="ds-foot">APPI · v134 · Compartir datos con submenu interno - mi equipo + distribuidor elegible + menu bloqueado</div>
+  <div class="ds-foot">APPI · v135 · Organigrama infinito - navegable zoom pan + color categoria + todos datos + menu bloqueado</div>
 </aside>
 <!-- Botón flotante para reabrir la barra (cuando está oculta) - oculto, reemplazado por nuevo -->
 <button class="ds-reopen" style="display:none !important" id="dsReopenBtn" onclick="toggleSidebar()" title="Abrir barra lateral" aria-label="Abrir barra lateral">☰</button>
@@ -6479,16 +6479,149 @@ ${(function(){
     };
   });
 }
+let orgChartScale=1;
+let orgChartPan={x:0,y:0};
+
 function renderEquipoArbol(){
   const cont = document.getElementById('equipoContent');
   const titulo = `<div style="display:flex;align-items:center;gap:10px;margin:8px 4px 12px">
     <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(80,90,130,0.25),transparent)"></div>
-    <h3 class="eq-base-title">🌳 Equipo Base</h3>
+    <h3 class="eq-base-title">🌳 Equipo Base - Organigrama Infinito</h3>
     <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(80,90,130,0.25),transparent)"></div>
   </div>`;
-  cont.innerHTML = titulo + `<div id="treeContainer">${renderTreeListaHTML()}</div>`;
+  const totalPersonas = equipoData.personas.length;
+  const totalRamas = equipoData.raices.length;
+  const infoBar = `<div style="display:flex;gap:8px;margin:0 4px 12px;flex-wrap:wrap">
+    <span style="padding:6px 10px;border-radius:999px;background:rgba(91,141,239,0.10);border:1px solid rgba(91,141,239,0.15);font-size:11px;font-weight:700">👥 ${totalPersonas} personas</span>
+    <span style="padding:6px 10px;border-radius:999px;background:rgba(58,208,164,0.10);border:1px solid rgba(58,208,164,0.15);font-size:11px;font-weight:700">🌳 ${totalRamas} ramas</span>
+    <span style="padding:6px 10px;border-radius:999px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.06);font-size:11px;font-weight:600">🎨 Color = categoría</span>
+    <span style="padding:6px 10px;border-radius:999px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.06);font-size:11px;font-weight:600">🖱️ Arrastrá para navegar · Scroll para zoom</span>
+  </div>`;
+
+  cont.innerHTML = titulo + infoBar + `
+    <div class="orgchart" id="orgchartMain" style="cursor:grab; user-select:none;">
+      <div class="org-zoom-bar">
+        <button class="org-zoom-btn" id="btnZoomOut" title="Alejar">−</button>
+        <button class="org-zoom-btn" id="btnZoomReset" title="Centrar y 100%">⌖</button>
+        <button class="org-zoom-btn" id="btnZoomIn" title="Acercar">+</button>
+      </div>
+      <div id="orgchartInner" style="display:flex; flex-direction:column; align-items:center; gap:16px; min-width:max-content; transform-origin: top center; transition: transform .15s ease;">
+        ${equipoData.raices.map(p=>renderTreeNodeOrg(p)).join('')}
+      </div>
+    </div>
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="document.getElementById('orgchartMain').scrollTo({top:0, left:0, behavior:'smooth'}); orgChartScale=1; document.getElementById('orgchartInner').style.transform='scale(1)';">⌖ Centrar</button>
+      <button class="btn btn-secondary" onclick="expandirTodoArbol()">🌳 Expandir todo</button>
+      <button class="btn btn-secondary" onclick="colapsarTodoArbol()">📁 Colapsar todo</button>
+    </div>
+  `;
   bindTreeEvents();
+  initOrgChartInfinite();
 }
+
+function expandirTodoArbol(){
+  if(!equipoData) return;
+  const recorrer=(p)=>{ equipoExpanded.add(p.id); (p.hijos||[]).forEach(recorrer); };
+  equipoData.raices.forEach(recorrer);
+  renderEquipoArbol();
+  haptic(10);
+}
+function colapsarTodoArbol(){
+  equipoExpanded.clear();
+  renderEquipoArbol();
+  haptic(10);
+}
+
+function initOrgChartInfinite(){
+  const container=document.getElementById('orgchartMain');
+  const inner=document.getElementById('orgchartInner');
+  if(!container || !inner) return;
+
+  // Reset scale
+  orgChartScale=1;
+  inner.style.transform=`scale(${orgChartScale})`;
+
+  // Zoom buttons
+  const btnIn=document.getElementById('btnZoomIn');
+  const btnOut=document.getElementById('btnZoomOut');
+  const btnReset=document.getElementById('btnZoomReset');
+  if(btnIn) btnIn.onclick=()=>{
+    orgChartScale=Math.min(2.0, orgChartScale+0.15);
+    inner.style.transform=`scale(${orgChartScale})`;
+    haptic(5);
+  };
+  if(btnOut) btnOut.onclick=()=>{
+    orgChartScale=Math.max(0.35, orgChartScale-0.15);
+    inner.style.transform=`scale(${orgChartScale})`;
+    haptic(5);
+  };
+  if(btnReset) btnReset.onclick=()=>{
+    orgChartScale=1;
+    inner.style.transform=`scale(${orgChartScale})`;
+    container.scrollTo({top:0, left:0, behavior:'smooth'});
+    haptic(8);
+  };
+
+  // Wheel zoom con Ctrl o pinch
+  container.addEventListener('wheel', (e)=>{
+    if(e.ctrlKey || e.metaKey){
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.08 : 0.08;
+      orgChartScale=Math.min(2.5, Math.max(0.25, orgChartScale+delta));
+      inner.style.transform=`scale(${orgChartScale})`;
+    }
+  }, {passive:false});
+
+  // Pan con drag
+  let isDragging=false, startX=0, startY=0, scrollLeft=0, scrollTop=0;
+  container.addEventListener('mousedown', (e)=>{
+    if(e.target.closest('.org-node')) return; // No arrastrar si clickea nodo
+    isDragging=true;
+    container.style.cursor='grabbing';
+    startX=e.pageX - container.offsetLeft;
+    startY=e.pageY - container.offsetTop;
+    scrollLeft=container.scrollLeft;
+    scrollTop=container.scrollTop;
+  });
+  const stopDragging=()=>{
+    isDragging=false;
+    container.style.cursor='grab';
+  };
+  window.addEventListener('mouseup', stopDragging);
+  container.addEventListener('mouseleave', stopDragging);
+  container.addEventListener('mousemove', (e)=>{
+    if(!isDragging) return;
+    e.preventDefault();
+    const x=e.pageX - container.offsetLeft;
+    const y=e.pageY - container.offsetTop;
+    const walkX=(x-startX)*1.2;
+    const walkY=(y-startY)*1.2;
+    container.scrollLeft=scrollLeft - walkX;
+    container.scrollTop=scrollTop - walkY;
+  });
+
+  // Touch pan
+  let touchStartX=0, touchStartY=0;
+  container.addEventListener('touchstart', (e)=>{
+    if(e.touches.length===1){
+      touchStartX=e.touches[0].pageX - container.offsetLeft;
+      touchStartY=e.touches[0].pageY - container.offsetTop;
+      scrollLeft=container.scrollLeft;
+      scrollTop=container.scrollTop;
+    }
+  }, {passive:true});
+  container.addEventListener('touchmove', (e)=>{
+    if(e.touches.length===1){
+      const x=e.touches[0].pageX - container.offsetLeft;
+      const y=e.touches[0].pageY - container.offsetTop;
+      const walkX=(x-touchStartX)*1.2;
+      const walkY=(y-touchStartY)*1.2;
+      container.scrollLeft=scrollLeft - walkX;
+      container.scrollTop=scrollTop - walkY;
+    }
+  }, {passive:true});
+}
+
 function renderTreeListaHTML(){
   let html = '<div class="tree-list">';
   equipoData.raices.forEach(p=>{ html += renderTreeNodeLista(p); });
@@ -6548,28 +6681,46 @@ function renderTreeNodeOrg(p){
   const hasKids = p.hijos && p.hijos.length > 0;
   const isExpanded = equipoExpanded.has(p.id);
   const pts = p.pnAct || 0;
+  const ptsOrg = calcularPBOrganizacion(p);
   const totalDesc = contarDescendientes(p);
   const g = p.garantias;
   const tieneGarantias = g && (g.presentadas > 0 || g.pendientes > 0);
   
-  // Colores según categoría
+  // Colores Apple - categoria = color de fondo del cuadrito
   const nodeBg = info.color;
-  const nodeText = info.textColor || '#1c1c1e';
-  const nodeBorder = info.border === 'solid' ? '2px solid #1c1c1e' : '2px solid rgba(0,0,0,0.15)';
-  const nodeStyle = `--nodeBg:${nodeBg};--nodeText:${nodeText};--nodeBorder:${nodeBorder}`;
-  
-  // Color para separador de garantías (contraste con el fondo)
-  const isDarkBg = ['CE','LE','EJ','E'].includes((p.cat||'').toUpperCase());
-  const garantiaBorderColor = isDarkBg ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.20)';
-  const garantiaTextColor = isDarkBg ? 'rgba(255,255,255,0.95)' : '#1c1c1e';
-  
+  const isLight = ['#ffffff','#e8e8ec','#f7c630'].includes(nodeBg);
+  const isDark = ['#000000','#4b7a55','#006fb2','#dd2c33'].includes(nodeBg) || ['CE','LE','EJ','E'].includes((p.cat||'').toUpperCase());
+  const textColor = isLight ? '#1d1d1f' : (isDark ? '#ffffff' : (info.textColor||'#1d1d1f'));
+  const subTextColor = isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.55)';
+  const borderColor = nodeBg==='#ffffff' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.9)';
+  const nodeStyle = `background:${nodeBg}; color:${textColor}; border:1.5px solid ${borderColor}; --nodeBg:${nodeBg};`;
+
+  const garantiaBorderColor = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.12)';
+  const garantiaTextColor = isDark ? 'rgba(255,255,255,0.90)' : '#1d1d1f';
+
+  // Datos extra que se vienen cargando
+  const tel = (p.tel||'').toString().trim();
+  const email = (p.email||'').toString().trim();
+  const codigo = (p.codigo||'').toString().trim();
+  const nivel = p.nivel||'';
+  const m1 = p.m1||0, m2=p.m2||0, m3=p.m3||0;
+  const alta = p.alta ? (p.alta.toLocaleDateString? p.alta.toLocaleDateString('es-AR') : p.alta) : '';
+
   let html = `
     <div class="org-node-wrap">
       <div class="org-node" data-pid="${p.id}" style="${nodeStyle}">
         ${totalDesc > 0 ? `<span class="on-count">${totalDesc}</span>` : ''}
-        <div class="on-name" style="font-weight:700;font-size:11.5px;line-height:1.25;margin-bottom:3px">${escapeXml(p.nombre)}</div>
-        <div class="on-pts" style="font-size:11px;font-weight:600;opacity:0.9">${info.name} · ${formatPB(pts)} PB</div>
-        ${tieneGarantias ? `<div style="margin-top:5px;padding-top:5px;border-top:1px dashed ${garantiaBorderColor};font-size:9.5px;font-weight:600;color:${garantiaTextColor};line-height:1.4">📄 ${formatPB(g.presentadas)}<br/>⚠️ ${formatPB(g.vencidas)} (${formatPB(g.porcVencidas)}%)<br/>⏳ ${formatPB(g.pendientes)}</div>` : ''}
+        <div style="display:flex; align-items:center; gap:6px; justify-content:center; margin-bottom:4px">
+          <span class="on-cat-badge" style="background:${isDark?'rgba(255,255,255,0.18)': 'rgba(0,0,0,0.06)'}; color:${textColor}; border:1px solid ${isDark?'rgba(255,255,255,0.15)':'rgba(0,0,0,0.06)'}">${info.name}</span>
+          ${nivel? `<span style="font-size:8px; font-weight:800; background:${isDark?'rgba(255,255,255,0.15)':'rgba(0,0,0,0.06)'}; padding:2px 5px; border-radius:4px;">Nv ${nivel}</span>` : ''}
+        </div>
+        <div class="on-name" style="color:${textColor}; font-weight:800; font-size:12px; line-height:1.2; margin-bottom:3px">${escapeXml(p.nombre)}</div>
+        ${codigo? `<div style="font-size:9px; font-weight:600; color:${subTextColor}; margin-bottom:3px">#${escapeXml(codigo)}</div>` : ''}
+        <div class="on-pts" style="background:${isDark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.06)'}; color:${textColor}; font-size:10px; font-weight:700; padding:3px 8px; border-radius:999px; display:inline-block; margin-bottom:4px">👤 ${formatPB(pts)} PB ${ptsOrg>pts? `· 👥 ${formatPB(ptsOrg)}` : ''}</div>
+        ${(m1||m2||m3)? `<div style="font-size:9px; color:${subTextColor}; margin-bottom:3px">M1:${formatPB(m1)} M2:${formatPB(m2)} M3:${formatPB(m3)}</div>` : ''}
+        ${tieneGarantias ? `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed ${garantiaBorderColor};font-size:9px;font-weight:600;color:${garantiaTextColor};line-height:1.4; text-align:left">📄 ${formatPB(g.presentadas)} pres<br/>⚠️ ${formatPB(g.vencidas)} venc ${g.porcVencidas? '('+formatPB(g.porcVencidas)+'%)':''}<br/>⏳ ${formatPB(g.pendientes)} pend</div>` : ''}
+        ${(tel||email)? `<div style="margin-top:6px; font-size:8.5px; color:${subTextColor}; line-height:1.3; text-align:left; word-break:break-all">${tel? '📞 '+escapeXml(tel)+'<br/>' : ''}${email? '✉️ '+escapeXml(email) : ''}</div>` : ''}
+        ${alta? `<div style="margin-top:4px; font-size:8px; color:${subTextColor}">📅 Alta ${escapeXml(alta.toString())}</div>` : ''}
       </div>
       ${hasKids ? `<div class="org-children ${isExpanded?'open':''}">
         ${p.hijos.map(h=>`<div class="org-child-wrap">${renderTreeNodeOrg(h)}</div>`).join('')}
