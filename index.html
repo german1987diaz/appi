@@ -3304,7 +3304,7 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
     <button class="ds-btn" data-ds="view-planning" onclick="showView('view-planning'); renderPlanningTools();"><span>🗓️</span> Planificación</button>
     <button class="ds-btn" data-ds="view-history" onclick="showView('view-history'); renderHistory();"><span>📜</span> Historial</button>
   </nav>
-  <div class="ds-foot">APPI · v126 · Mapa general a derecha + Limpiar Busqueda titilando + sin boton limpiar filtro viejo</div>
+  <div class="ds-foot">APPI · v127 · Pantalla limpia sin pildoras - dashboard acceso directo categorias + dropdown zona + menu bloqueado</div>
 </aside>
 <!-- Botón flotante para reabrir la barra (cuando está oculta) - oculto, reemplazado por nuevo -->
 <button class="ds-reopen" style="display:none !important" id="dsReopenBtn" onclick="toggleSidebar()" title="Abrir barra lateral" aria-label="Abrir barra lateral">☰</button>
@@ -4052,25 +4052,24 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
 
     <div id="usuariosDashboard" style="display:none">
       <div class="stats">
-        <div class="stat"><b id="usuariosStTotal">0</b><small>Total</small></div>
-        <div class="stat"><b id="usuariosStVencidas" style="color:#d9534f">0</b><small>Vencidas</small></div>
-        <div class="stat"><b id="usuariosStPorVencer" style="color:#a3670b">0</b><small>Por vencer</small></div>
-        <div class="stat"><b id="usuariosStZonas">0</b><small>Zonas</small></div>
+        <div class="stat stat-clickable active" data-f="all" id="statAll"><b id="usuariosStTotal">0</b><small>Total</small></div>
+        <div class="stat stat-clickable" data-f="vencida" id="statVenc"><b id="usuariosStVencidas" style="color:#d9534f">0</b><small>Vencidas</small></div>
+        <div class="stat stat-clickable" data-f="porVencer" id="statPorV"><b id="usuariosStPorVencer" style="color:#a3670b">0</b><small>Por vencer</small></div>
+        <div class="stat stat-clickable" data-f="vigente" id="statVig"><b id="usuariosStVigentes" style="color:#3ad0a4">0</b><small>Vigentes</small></div>
       </div>
       <div class="glass">
         <div class="search-box">
           <span>🔍</span><input type="text" id="usuariosSearch" placeholder="Buscar por nombre, domicilio, localidad...">
           <button id="usuariosClearSearch" style="border:none;background:none;cursor:pointer">✕</button>
         </div>
-        <div class="filters" id="usuariosFilterVenc">
-          <button class="filter active" data-f="all">Todos</button>
-          <button class="filter" data-f="vencidas">🔴 Vencidas</button>
-          <button class="filter" data-f="porVencer">🟡 Por vencer 30d</button>
-          <button class="filter" data-f="vigentes">🟢 Vigentes</button>
+        <div style="margin-top:12px">
+          <label style="font-size:10.5px;font-weight:800;color:#6b6b76;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;display:block">Filtrar por zona</label>
+          <select id="usuariosSelectZona" class="presu-select" style="width:100%;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,0.75);border:1px solid rgba(80,90,130,0.14);font-weight:600;font-size:13px;backdrop-filter:blur(14px)">
+            <option value="all">📍 Todas las zonas</option>
+          </select>
         </div>
-        <div class="filters" id="usuariosFilterZonas" style="max-height:120px;overflow-y:auto"></div>
-        <div id="usuariosActiveFilters" style="display:none;margin-top:10px;padding:10px 14px;border-radius:12px;background:rgba(91,141,239,0.10);border:1px solid rgba(91,141,239,0.18);font-size:12px;font-weight:600;color:#3a3a48"></div>
-        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <div id="usuariosActiveFilters" style="display:none;margin-top:12px;padding:10px 14px;border-radius:12px;background:rgba(91,141,239,0.10);border:1px solid rgba(91,141,239,0.18);font-size:12px;font-weight:600;color:#3a3a48"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
           <button class="btn btn-primary" id="usuariosBtnVerTodos" style="display:none;background:linear-gradient(135deg,#5b8def,#a06bff);color:#fff;border:none;box-shadow:0 4px 12px rgba(91,141,239,0.30)">📋 Ver listado completo</button>
           <button class="btn btn-secondary" id="usuariosBtnCambiarArchivo">📂 Cambiar archivo</button>
           <button class="btn btn-secondary" id="usuariosBtnOrdenVence">📅 Ordenar por Vence</button>
@@ -11212,6 +11211,11 @@ body.dark .search-box input{color:#ffffff !important}
   transition:transform .15s ease;
 }
 #view-usuarios .stat:active{transform:scale(0.96)}
+#view-usuarios .stat.stat-clickable{cursor:pointer; transition:all .20s cubic-bezier(.34,1.56,.64,1);}
+#view-usuarios .stat.stat-clickable:hover{transform:translateY(-2px); box-shadow:0 8px 22px rgba(80,90,130,0.12);}
+#view-usuarios .stat.stat-clickable.active{outline:2px solid #5b8def; outline-offset:0px; box-shadow:0 0 0 4px rgba(91,141,239,0.14), 0 8px 22px rgba(80,90,130,0.12); background:rgba(255,255,255,0.85);}
+#view-usuarios .stat.stat-clickable.active b{color:#3d63c9;}
+body.dark #view-usuarios .stat.stat-clickable.active{outline-color:#a8b8ff; background:rgba(50,50,70,0.75); box-shadow:0 0 0 4px rgba(91,141,239,0.18), 0 8px 22px rgba(0,0,0,0.18);}
 #view-usuarios .stat b{
   display:block;
   font-size:22px;
@@ -12259,18 +12263,24 @@ function parseRowsU(rows){
 // Render
 function renderZonasU(){
   const zonas=[...new Set(usuariosU.map(u=>u.localidad).filter(Boolean))].sort();
-  const cont=document.getElementById('usuariosFilterZonas');
-  if(!cont) return;
-  cont.innerHTML='<button class="filter active" data-z="all">📍 Todas ('+zonas.length+')</button>' + zonas.map(z=>`<button class="filter" data-z="${z.replace(/"/g,'&quot;')}">${z}</button>`).join('');
-  cont.querySelectorAll('[data-z]').forEach(b=>{
-    b.onclick=()=>{
-      cont.querySelectorAll('[data-z]').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      filtroZonaU=b.dataset.z;
-      aplicarFiltrosU();
-    };
-  });
-  const st=document.getElementById('usuariosStZonas'); if(st) st.textContent=zonas.length;
+  const select=document.getElementById('usuariosSelectZona');
+  if(select){
+    const current=select.value||'all';
+    select.innerHTML='<option value="all">📍 Todas las zonas ('+zonas.length+')</option>' + zonas.map(z=>`<option value="${z.replace(/"/g,'&quot;')}">${z}</option>`).join('');
+    // Restaurar valor si existe
+    if(zonas.includes(filtroZonaU) || filtroZonaU==='all'){
+      select.value=filtroZonaU;
+    }else{
+      select.value='all';
+      filtroZonaU='all';
+    }
+  }
+  // Actualizar contadores de stats - la vieja stat de zonas ya no existe, pero mantenemos compat
+  const stZ=document.getElementById('usuariosStZonas');
+  if(stZ) stZ.textContent=zonas.length;
+  // Actualizar stats de vigentes
+  const stVig=document.getElementById('usuariosStVigentes');
+  if(stVig) stVig.textContent=usuariosU.filter(u=>u.estado==='vigente').length;
 }
 function resetFiltrosU(){
   filtroVencU='all';
@@ -12279,6 +12289,14 @@ function resetFiltrosU(){
   window.ordenPorVenceU=false;
   const qEl=document.getElementById('usuariosSearch');
   if(qEl) qEl.value='';
+  // Reset select zona
+  const selZona=document.getElementById('usuariosSelectZona');
+  if(selZona) selZona.value='all';
+  // Reset stats active
+  document.querySelectorAll('#usuariosDashboard .stat.stat-clickable').forEach(s=>s.classList.remove('active'));
+  const statAll=document.getElementById('statAll');
+  if(statAll) statAll.classList.add('active');
+  // Legacy pills compat (por si quedan)
   const fv=document.getElementById('usuariosFilterVenc');
   if(fv){
     fv.querySelectorAll('[data-f]').forEach(x=>x.classList.remove('active'));
@@ -12294,14 +12312,8 @@ function resetFiltrosU(){
   const btnOrden=document.getElementById('usuariosBtnOrdenVence');
   if(btnOrden) btnOrden.textContent='📅 Ordenar por Vence';
   aplicarFiltrosU();
-  // Ocultar mapa si estaba mostrando vecinos
-  const mapDiv=document.getElementById('usuariosMap');
-  if(mapDiv && markersU.length>0){
-    // No ocultamos mapa automaticamente, pero limpiamos marcadores si quiere ver todo
-    // Dejamos que el usuario decida, solo reseteamos lista
-  }
   if(typeof haptic==='function') haptic(10);
-  if(typeof showToast==='function') showToast('📋 Listado completo');
+  if(typeof showToast==='function') showToast('📋 Listado completo - filtros limpiados');
 }
 
 function aplicarFiltrosU(){
@@ -12449,10 +12461,14 @@ window.verMapaU=function(query){
 };
 window.verVecinosU=function(localidad){
   if(!localidad || localidad==='all'){ alert('Elegí una zona'); return; }
+  // Compatibilidad vieja pills
   const cont=document.getElementById('usuariosFilterZonas');
   if(cont){
     cont.querySelectorAll('[data-z]').forEach(b=>{ b.classList.toggle('active', b.dataset.z===localidad); });
   }
+  // Nueva UI select
+  const sel=document.getElementById('usuariosSelectZona');
+  if(sel) sel.value=localidad;
   filtroZonaU=localidad;
   aplicarFiltrosU();
   const lista=usuariosU.filter(u=>u.localidad===localidad);
@@ -12462,6 +12478,7 @@ window.verVecinosU=function(localidad){
     window.mostrarEnMapaU(q, lista);
     const mapDiv=document.getElementById('usuariosMap');
     if(mapDiv) window.scrollTo({top:mapDiv.offsetTop-20, behavior:'smooth'});
+    if(typeof haptic==='function') haptic(10);
   }
 };
 
@@ -12878,6 +12895,9 @@ function mostrarDashboardU(){
   if(vencEl) vencEl.textContent=usuariosU.filter(u=>u.estado==='vencida').length;
   const porVEl=document.getElementById('usuariosStPorVencer');
   if(porVEl) porVEl.textContent=usuariosU.filter(u=>u.estado==='porVencer').length;
+  const vigEl=document.getElementById('usuariosStVigentes');
+  if(vigEl) vigEl.textContent=usuariosU.filter(u=>u.estado==='vigente').length;
+  // Actualizar también total en statAll si existe
   renderZonasU();
   aplicarFiltrosU();
 }
@@ -12973,6 +12993,37 @@ function initUsuarios(){
   if(search) search.oninput=()=>aplicarFiltrosU();
   const clearSearch=document.getElementById('usuariosClearSearch');
   if(clearSearch) clearSearch.onclick=()=>{ const s=document.getElementById('usuariosSearch'); if(s) s.value=''; aplicarFiltrosU(); };
+  // Nuevo: Dashboard stats como acceso directo a categorias (reemplaza pills viejas)
+  document.querySelectorAll('#usuariosDashboard .stat.stat-clickable').forEach(card=>{
+    card.style.cursor='pointer';
+    card.onclick=()=>{
+      const f=card.dataset.f||'all';
+      filtroVencU=f;
+      // Actualizar active en stats
+      document.querySelectorAll('#usuariosDashboard .stat.stat-clickable').forEach(c=>c.classList.remove('active'));
+      card.classList.add('active');
+      // Legacy compat: actualizar pills viejas si existen
+      const fv=document.getElementById('usuariosFilterVenc');
+      if(fv){
+        fv.querySelectorAll('[data-f]').forEach(x=>x.classList.remove('active'));
+        const m=fv.querySelector(`[data-f="${f}"]`);
+        if(m) m.classList.add('active');
+      }
+      aplicarFiltrosU();
+      if(typeof haptic==='function') haptic(8);
+    };
+  });
+
+  // Nuevo: Select de zona (reemplaza pills de zonas)
+  const selectZona=document.getElementById('usuariosSelectZona');
+  if(selectZona){
+    selectZona.onchange=()=>{
+      filtroZonaU=selectZona.value;
+      aplicarFiltrosU();
+      if(typeof haptic==='function') haptic(8);
+    };
+  }
+
   const filterVenc=document.getElementById('usuariosFilterVenc');
   if(filterVenc){
     filterVenc.querySelectorAll('[data-f]').forEach(b=>{
@@ -12980,6 +13031,10 @@ function initUsuarios(){
         filterVenc.querySelectorAll('[data-f]').forEach(x=>x.classList.remove('active'));
         b.classList.add('active');
         filtroVencU=b.dataset.f;
+        // Sincronizar stats
+        document.querySelectorAll('#usuariosDashboard .stat.stat-clickable').forEach(c=>{
+          c.classList.toggle('active', c.dataset.f===b.dataset.f);
+        });
         aplicarFiltrosU();
       };
     });
