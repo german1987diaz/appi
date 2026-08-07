@@ -3304,7 +3304,7 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
     <button class="ds-btn" data-ds="view-planning" onclick="showView('view-planning'); renderPlanningTools();"><span>🗓️</span> Planificación</button>
     <button class="ds-btn" data-ds="view-history" onclick="showView('view-history'); renderHistory();"><span>📜</span> Historial</button>
   </nav>
-  <div class="ds-foot">APPI · v129 · FIX Home desaparecio - syntax error leftover duplicado + Mi Negocio cuadraditos</div>
+  <div class="ds-foot">APPI · v130 · Lista Precios como cuadradito en Mi Negocio (4 cuadraditos) + Mi Negocio cuadraditos + menu bloqueado</div>
 </aside>
 <!-- Botón flotante para reabrir la barra (cuando está oculta) - oculto, reemplazado por nuevo -->
 <button class="ds-reopen" style="display:none !important" id="dsReopenBtn" onclick="toggleSidebar()" title="Abrir barra lateral" aria-label="Abrir barra lateral">☰</button>
@@ -9493,7 +9493,7 @@ function renderHomeCompleto(){
 }
 
 
-// === OVERRIDE HOME TOOLS - LISTA PRECIOS + 2 CUADRADITOS ABAJO (GRABADORA + NOTAS) ===
+// === OVERRIDE HOME TOOLS - 2 CUADRADITOS ABAJO (GRABADORA + NOTAS) - LISTA DE PRECIOS YA ESTA EN MI NEGOCIO COMO CUADRADITO ===
 (function(){
   const _origTools = renderToolsList;
   renderToolsList = function(){
@@ -9505,19 +9505,8 @@ function renderHomeCompleto(){
       if(existing) existing.remove();
       const existing2=document.getElementById('homeExtraKeep');
       if(existing2) existing2.remove();
-      
-      const extra=document.createElement('div');
-      extra.id='homeExtraTools';
-      extra.className='home-section-block';
-      extra.innerHTML=`
-        <button type="button" class="business-card" style="width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:18px" onclick="openPrecios()">
-          <div class="business-icon" style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#4b7a55,#3ad0a4);display:grid;place-items:center;color:#fff;font-size:22px;box-shadow:0 4px 10px rgba(0,0,0,0.12)">💲</div>
-          <h3 style="margin:0;font-size:16px;font-weight:900;letter-spacing:0.5px">LISTA DE PRECIOS</h3>
-        </button>
-      `;
-      list.appendChild(extra);
 
-      // Dos cuadraditos en un mismo renglon abajo de todo - Grabadora + Notas Keep
+      // Dos cuadraditos en un mismo renglon abajo de todo - Grabadora + Notas Keep (Lista Precios ya esta en Mi Negocio como cuadradito)
       const extraKeep=document.createElement('div');
       extraKeep.id='homeExtraKeep';
       extraKeep.className='home-section-block';
