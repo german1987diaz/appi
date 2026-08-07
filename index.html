@@ -1523,90 +1523,118 @@
     to { opacity: 1; transform: translateY(0); }
   }
     .orgchart {
-    padding: 14px; border-radius: 18px;
-    background: rgba(255,255,255,0.6);
-    border: 1px solid rgba(255,255,255,0.7);
-    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    padding: 20px; border-radius: 22px;
+    background: 
+      radial-gradient(600px 400px at 20% 10%, rgba(91,141,239,0.06), transparent 60%),
+      radial-gradient(600px 400px at 80% 20%, rgba(160,107,255,0.06), transparent 60%),
+      rgba(255,255,255,0.62);
+    border: 1px solid rgba(255,255,255,0.75);
+    -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: 0 12px 32px rgba(80,90,130,0.10), 0 1px 0 rgba(255,255,255,0.8) inset;
     overflow: auto;
-    max-height: 75vh;
+    max-height: 78vh;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+    position:relative;
   }
   .orgchart > div {
     display: inline-block;
     min-width: 100%;
-    padding: 10px 20px;
+    padding: 20px 30px;
+    transform-origin: top center;
+    transition: transform .25s var(--ease, cubic-bezier(.25,.1,.25,1));
   }
   .org-node-wrap {
     display: flex; flex-direction: column; align-items: center;
-    padding: 6px 4px;
+    padding: 8px 6px;
   }
   .org-node {
-    padding: 12px 14px;
-    border-radius: 20px;
-    background: var(--nodeBg, #ffffff);
-    color: var(--nodeText, #1c1c1e);
-    border: var(--nodeBorder, 2px solid rgba(0,0,0,0.15));
-    min-width: 110px;
-    max-width: 150px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.84);
+    color: #1d1d1f;
+    border: 1px solid rgba(255,255,255,0.9);
+    min-width: 148px;
+    max-width: 200px;
     text-align: center;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.10);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06), 0 1px 0 rgba(255,255,255,0.9) inset;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.2s ease;
+    transition: all .22s cubic-bezier(.34,1.56,.64,1);
     position: relative;
+    backdrop-filter: blur(16px) saturate(180%);
   }
   .org-node:hover {
-    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.9) inset;
+    transform: translateY(-3px) scale(1.02);
   }
-  .org-node:active { transform: scale(0.97); }
+  .org-node:active { transform: scale(0.96); }
   .org-node.selected {
-    border-color: #5b8def;
-    box-shadow: 0 4px 14px rgba(91,141,239,0.35);
+    border-color: #0071e3;
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.15), 0 8px 24px rgba(0,113,227,0.20);
   }
   .org-node .on-cat-badge {
-    display: inline-block; padding: 1px 6px; border-radius: 5px;
-    font-size: 9px; font-weight: 800; color: #fff;
-    margin-bottom: 2px; letter-spacing: 0.3px;
+    display: inline-block; padding: 2px 7px; border-radius: 6px;
+    font-size: 8.5px; font-weight: 800; color: #fff;
+    margin-bottom: 4px; letter-spacing:0.4px; text-transform:uppercase;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
   }
   .org-node .on-name {
-    font-size: 11.5px; font-weight: 700; color: #1c1c1e;
-    line-height: 1.2; word-break: break-word;
+    font-size: 12.5px; font-weight: 700; color: #1d1d1f;
+    line-height: 1.25; word-break: break-word; letter-spacing:-0.1px;
   }
   .org-node .on-pts {
-    font-size: 10.5px; font-weight: 700; color: #3d63c9;
-    margin-top: 2px;
+    font-size: 10px; font-weight: 700; color: #6e6e73;
+    margin-top: 5px;
+    background: rgba(0,0,0,0.05);
+    padding: 3px 8px; border-radius:999px;
+    display:inline-block;
   }
   .org-node .on-count {
-    position: absolute; top: -6px; right: -6px;
-    background: linear-gradient(135deg, #3ad0a4, #5b8def);
-    color: #fff; font-size: 9px; font-weight: 800;
-    padding: 2px 6px; border-radius: 999px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    position: absolute; top: -8px; right: -8px;
+    background: linear-gradient(135deg, #0071e3, #42a6ff);
+    color: #fff; font-size: 10px; font-weight: 800;
+    padding: 3px 8px; border-radius: 999px;
+    box-shadow: 0 3px 10px rgba(0,113,227,0.24);
+    border:1px solid rgba(255,255,255,0.8);
   }
   .org-children {
-    display: none; padding-top: 18px; position: relative;
+    display: none; padding-top: 22px; position: relative;
   }
-  .org-children.open { display: flex; gap: 8px; align-items: flex-start; }
+  .org-children.open { display: flex; gap: 12px; align-items: flex-start; }
 
   .org-children::before {
     content: ""; position: absolute; top: 0; left: 50%;
-    width: 4px; height: 20px; background: #4a5570;
+    width: 2px; height: 22px; background: linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.06));
     transform: translateX(-50%);
   }
   .org-children.open::after {
-    content: ""; position: absolute; top: 20px; left: 0; right: 0;
-    height: 4px; background: #4a5570;
+    content: ""; position: absolute; top: 22px; left: 12px; right: 12px;
+    height: 2px; background: linear-gradient(90deg, rgba(0,0,0,0.08), rgba(0,0,0,0.06), rgba(0,0,0,0.08));
+    border-radius:999px;
   }
   .org-child-wrap {
     display: flex; flex-direction: column; align-items: center;
-    position: relative; padding-top: 20px;
+    position: relative; padding-top: 22px;
   }
   .org-child-wrap::before {
     content: ""; position: absolute; top: 0; left: 50%;
-    width: 4px; height: 20px; background: #4a5570;
+    width: 2px; height: 22px; background: linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.05));
     transform: translateX(-50%);
   }
+  /* Zoom controls Apple style */
+  .org-zoom-bar{
+    position:absolute; top:12px; right:12px; z-index:10;
+    display:flex; gap:6px; padding:6px; border-radius:12px;
+    background:rgba(255,255,255,0.82); backdrop-filter:blur(16px) saturate(180%);
+    border:1px solid rgba(255,255,255,0.8); box-shadow:0 4px 14px rgba(0,0,0,0.08);
+  }
+  .org-zoom-btn{
+    width:32px; height:32px; border-radius:8px; border:none;
+    background:var(--card2, rgba(255,255,255,0.9)); cursor:pointer;
+    font-size:14px; font-weight:700; display:grid; place-items:center;
+    transition:all .15s;
+  }
+  .org-zoom-btn:active{ transform:scale(0.92); }
   .person-item {
     display: flex; align-items: center; gap: 10px;
     padding: 10px 12px; border-radius: 14px; margin-bottom: 6px;
@@ -3304,7 +3332,7 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
     <button class="ds-btn" data-ds="view-planning" onclick="showView('view-planning'); renderPlanningTools();"><span>🗓️</span> Planificación</button>
     <button class="ds-btn" data-ds="view-history" onclick="showView('view-history'); renderHistory();"><span>📜</span> Historial</button>
   </nav>
-  <div class="ds-foot">APPI · v131 · Lista Precios como 4to cuadradito en Mi Negocio + 4 cuadraditos Mi Negocio + menu bloqueado</div>
+  <div class="ds-foot">APPI · v132 · Organigramas Apple - nodos glass + zoom + lineas suaves + menu bloqueado</div>
 </aside>
 <!-- Botón flotante para reabrir la barra (cuando está oculta) - oculto, reemplazado por nuevo -->
 <button class="ds-reopen" style="display:none !important" id="dsReopenBtn" onclick="toggleSidebar()" title="Abrir barra lateral" aria-label="Abrir barra lateral">☰</button>
