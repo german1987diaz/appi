@@ -3304,7 +3304,7 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
     <button class="ds-btn" data-ds="view-planning" onclick="showView('view-planning'); renderPlanningTools();"><span>🗓️</span> Planificación</button>
     <button class="ds-btn" data-ds="view-history" onclick="showView('view-history'); renderHistory();"><span>📜</span> Historial</button>
   </nav>
-  <div class="ds-foot">APPI · v128 · Mi Negocio en cuadraditos como Mi Mes + pantalla limpia + menu bloqueado</div>
+  <div class="ds-foot">APPI · v129 · FIX Home desaparecio - syntax error leftover duplicado + Mi Negocio cuadraditos</div>
 </aside>
 <!-- Botón flotante para reabrir la barra (cuando está oculta) - oculto, reemplazado por nuevo -->
 <button class="ds-reopen" style="display:none !important" id="dsReopenBtn" onclick="toggleSidebar()" title="Abrir barra lateral" aria-label="Abrir barra lateral">☰</button>
@@ -9460,9 +9460,6 @@ function renderToolsList(){
     <div class="home-section-block">
       <div class="mini-section-label"><span>🌱</span> Mi negocio</div>
       <div class="home-tool-grid">${equipoCard + usuariosCard + seguimientoCard}</div>
-    </div>
-  `;      ${usuariosCard}
-      ${seguimientoCard}
     </div>
   `;
 }
