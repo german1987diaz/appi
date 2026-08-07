@@ -3304,7 +3304,7 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
     <button class="ds-btn" data-ds="view-planning" onclick="showView('view-planning'); renderPlanningTools();"><span>🗓️</span> Planificación</button>
     <button class="ds-btn" data-ds="view-history" onclick="showView('view-history'); renderHistory();"><span>📜</span> Historial</button>
   </nav>
-  <div class="ds-foot">APPI · v127 · Pantalla limpia sin pildoras - dashboard acceso directo categorias + dropdown zona + menu bloqueado</div>
+  <div class="ds-foot">APPI · v128 · Mi Negocio en cuadraditos como Mi Mes + pantalla limpia + menu bloqueado</div>
 </aside>
 <!-- Botón flotante para reabrir la barra (cuando está oculta) - oculto, reemplazado por nuevo -->
 <button class="ds-reopen" style="display:none !important" id="dsReopenBtn" onclick="toggleSidebar()" title="Abrir barra lateral" aria-label="Abrir barra lateral">☰</button>
@@ -9414,56 +9414,43 @@ function renderToolsList(){
     onClick:`openRueda('negocio')`, accent:'#ff6b9d', gradient:'linear-gradient(135deg,#ff8f6b,#ff6b9d)'
   });
 
-  const equipoCard = `
-    <button type="button" class="business-card" onclick="openEquipo()">
-      <div class="business-icon">🌳</div>
-      <div>
-        <h3>Mi Equipo</h3>
-        <p>${equipoCargado ? `${eq.activos} activos de ${eq.total} personas` : 'Importá tu línea descendente y mirá datos clave.'}</p>
-      </div>
-      <div class="business-status">
-        ${equipoCargado ? `${eq.total}` : 'Sin cargar'}
-        <small>${equipoCargado ? `${eq.pctActivos}% activos` : 'Equipo'}</small>
-      </div>
-      <div class="business-progress" style="--pct:${equipoCargado ? eq.pctActivos : 0}%"><span></span></div>
-    </button>
-  `;
+  const equipoCard = renderHomeQuickCard({
+    icon:'🌳', title:'Mi Equipo', sub: equipoCargado ? `${eq.activos} activos de ${eq.total}` : 'Importá tu equipo',
+    statusVal: equipoCargado ? `${eq.total}` : 'Sin cargar',
+    statusClass: equipoCargado ? 'pending' : 'empty',
+    progressPct: equipoCargado ? eq.pctActivos : 0,
+    timeAgo: equipoCargado ? `${eq.pctActivos}% activos` : '',
+    onClick:'openEquipo()', accent:'#3ad0a4', gradient:'linear-gradient(135deg,#3ad0a4,#a06bff)'
+  });
 
   const carreraData = cargarCarrera();
   const carreraPb = +carreraData.pb || 0;
   const carreraObj = +carreraData.objetivo || 13;
   const carreraCard = `
-    <button type="button" class="business-card" onclick="openCarrera()">
+    <button type="button" class="business-card" onclick="openCarrera()" style="display:none">
       <div class="business-icon">📈</div>
-      <div><h3>Mi carrera</h3><p>${carreraPb}/${carreraObj} PB personales del mes</p></div>
+      <div><h3>Mi carrera</h3><p>${carreraPb}/${carreraObj} PB</p></div>
       <div class="business-status">${Math.min(100,Math.round(carreraObj ? carreraPb/carreraObj*100 : 0))}%<small>avance</small></div>
-      <div class="business-progress" style="--pct:${Math.min(100,carreraObj ? carreraPb/carreraObj*100 : 0)}%"><span></span></div>
     </button>
   `;
 
-  const seguimientoCard = `
-    <button type="button" class="business-card" onclick="openSeguimiento()">
-      <div class="business-icon">👥</div>
-      <div>
-        <h3>Contactos del Mes</h3>
-        <p>Personas para contactar y próximos pasos.</p>
-      </div>
-      <div class="business-status">${seguimientoPendientes()}<small>pendientes</small></div>
-      <div class="business-progress" style="--pct:${seguimientoProgreso()}%"><span></span></div>
-    </button>
-  `;
+  const seguimientoCard = renderHomeQuickCard({
+    icon:'👥', title:'Contactos', sub:'Del mes - pendientes',
+    statusVal: `${seguimientoPendientes()}`,
+    statusClass: seguimientoPendientes()>0 ? 'pending' : 'empty',
+    progressPct: seguimientoProgreso(),
+    timeAgo: seguimientoPendientes()>0 ? `${seguimientoPendientes()} pend.` : 'Al día',
+    onClick:'openSeguimiento()', accent:'#a06bff', gradient:'linear-gradient(135deg,#a06bff,#5b8def)'
+  });
 
-  const usuariosCard = `
-    <button type="button" class="business-card" onclick="showView('view-usuarios')" style="border:1.5px solid rgba(58,208,164,0.25)">
-      <div class="business-icon" style="background:linear-gradient(135deg,#3ad0a4,#5b8def)">📍</div>
-      <div>
-        <h3>Usuarios</h3>
-        <p>Gestión por zona y vencimiento con mapa</p>
-      </div>
-      <div class="business-status">Garantías<small>mapa</small></div>
-      <div class="business-progress" style="--pct:100%"><span style="background:linear-gradient(90deg,#3ad0a4,#5b8def)"></span></div>
-    </button>
-  `;
+  const usuariosCard = renderHomeQuickCard({
+    icon:'📍', title:'Usuarios', sub:'Garantías y mapa',
+    statusVal: 'Garantías',
+    statusClass: 'pending',
+    progressPct: 100,
+    timeAgo: 'Mapa',
+    onClick:`showView('view-usuarios')`, accent:'#3ad0a4', gradient:'linear-gradient(135deg,#3ad0a4,#5b8def)'
+  });
 
   document.getElementById('toolsList').innerHTML = `
     <div class="home-section-block">
@@ -9472,8 +9459,9 @@ function renderToolsList(){
     </div>
     <div class="home-section-block">
       <div class="mini-section-label"><span>🌱</span> Mi negocio</div>
-      ${equipoCard}
-      ${usuariosCard}
+      <div class="home-tool-grid">${equipoCard + usuariosCard + seguimientoCard}</div>
+    </div>
+  `;      ${usuariosCard}
       ${seguimientoCard}
     </div>
   `;
