@@ -3332,7 +3332,7 @@ body.dark .ganancias-table td{color:#d0d0d8;border-top-color:rgba(255,255,255,.0
     <button class="ds-btn" data-ds="view-planning" onclick="showView('view-planning'); renderPlanningTools();"><span>🗓️</span> Planificación</button>
     <button class="ds-btn" data-ds="view-history" onclick="showView('view-history'); renderHistory();"><span>📜</span> Historial</button>
   </nav>
-  <div class="ds-foot">APPI · v133 · Compartir datos unificado (mi equipo + distribuidor en 1 boton) + menu bloqueado</div>
+  <div class="ds-foot">APPI · v134 · Compartir datos con submenu interno - mi equipo + distribuidor elegible + menu bloqueado</div>
 </aside>
 <!-- Botón flotante para reabrir la barra (cuando está oculta) - oculto, reemplazado por nuevo -->
 <button class="ds-reopen" style="display:none !important" id="dsReopenBtn" onclick="toggleSidebar()" title="Abrir barra lateral" aria-label="Abrir barra lateral">☰</button>
@@ -7143,6 +7143,38 @@ function generarMensajeUnificadoEquipoYDistribuidor(persona){
   return `${teamMsg}\n\n━━━━━━━━━━━━━━━\n\n${distMsg}`;
 }
 
+function abrirSubmenuCompartirDatos(){
+  const html = `
+    <button class="share-menu-item" id="smMiEquipo">
+      <div class="sm-ico" style="background:linear-gradient(135deg,#25D366,#128C7E)">💬</div>
+      <div class="sm-txt">
+        <div class="sm-title">Datos de mi equipo</div>
+        <div class="sm-desc">Resumen general por WhatsApp</div>
+      </div>
+      <span class="sm-arrow">›</span>
+    </button>
+    <button class="share-menu-item" id="smOtroDist">
+      <div class="sm-ico" style="background:linear-gradient(135deg,#f5b301,#ff8f6b)">👤</div>
+      <div class="sm-txt">
+        <div class="sm-title">Datos de un distribuidor</div>
+        <div class="sm-desc">Elegí a alguien de tu equipo</div>
+      </div>
+      <span class="sm-arrow">›</span>
+    </button>
+  `;
+  modal.open({
+    icon:'📊', iconBg:'linear-gradient(135deg,#25D366,#128C7E)',
+    title:'Compartir datos', sub:'Elegí qué compartir',
+    html
+  });
+  setTimeout(()=>{
+    const b1=document.getElementById('smMiEquipo');
+    const b2=document.getElementById('smOtroDist');
+    if(b1) b1.onclick=()=>{ modal.close(); haptic(10); enviarMensajeWhatsApp(generarMensajeMiEquipo(), 'Mi Equipo'); };
+    if(b2) b2.onclick=()=>{ modal.close(); haptic(10); abrirSelectorDistribuidor(); };
+  },50);
+}
+
 function abrirSelectorParaCompartirDatos(){
   const personasOrdenadas = [...equipoData.personas].filter(p => !p.esTitular).sort((a,b) => {
     const da = contarDescendientes(a);
@@ -7224,7 +7256,7 @@ document.getElementById('btnEquipoShare').onclick = ()=>{
       <div class="sm-ico" style="background:linear-gradient(135deg,#25D366,#128C7E)">📊</div>
       <div class="sm-txt">
         <div class="sm-title">Compartir datos</div>
-        <div class="sm-desc">Datos de mi equipo + datos de un distribuidor</div>
+        <div class="sm-desc">Elegí qué compartir: personal o de otro distribuidor</div>
       </div>
       <span class="sm-arrow">›</span>
     </button>
@@ -7245,7 +7277,7 @@ document.getElementById('btnEquipoShare').onclick = ()=>{
   setTimeout(()=>{
     const bd = document.getElementById('smDatos');
     const bi = document.getElementById('smImage');
-    if(bd) bd.onclick = ()=>{ modal.close(); haptic(10); abrirSelectorParaCompartirDatos(); };
+    if(bd) bd.onclick = ()=>{ modal.close(); haptic(10); abrirSubmenuCompartirDatos(); };
     if(bi) bi.onclick = ()=>{ modal.close(); haptic(10); abrirSelectorPersona(); };
   }, 50);
 };
