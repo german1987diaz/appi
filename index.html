@@ -8525,8 +8525,8 @@ const GANANCIAS_T={
 };
 
 
-const PRECIOS_URL='https://german1987diaz.github.io/appi/precios.json';
-const PROMOS_URL='https://german1987diaz.github.io/appi/promociones.json';
+const PRECIOS_URL='./precios.json';
+const PROMOS_URL='./promociones.json';
 let promocionesData = null; // { version, actualizado, fuente, promociones: [...] }
 
 const PRECIOS_CACHE_KEY='precios_oficiales';
@@ -10029,7 +10029,7 @@ iniciarApp = function(){
 // ===========================================================
 // 🚫 CHEQUEO DE LISTA NEGRA (BLOCKLIST)
 // ===========================================================
-const BLOCKLIST_URL = 'https://german1987diaz.github.io/appi/blocklist.json';
+const BLOCKLIST_URL = './blocklist.json';
 
 async function chequearBlocklist() {
   try {
@@ -12799,12 +12799,20 @@ window.mostrarEnMapaU=async function(query, lista=null){
       L.popup().setLatLng(mapU.getCenter()).setContent(`<b>📍 ${query}</b><br/>${lista.length} usuarios<br/>🔴 Vencidas | 🟡 Por vencer | 🟢 Vigentes<br/><br/>⏳ Geocodificando ultra-preciso 0/${lista.length}...<br/><small>OSM Nominatim structured + CP→Provincia + cache v3</small>`).openOn(mapU);
     }catch(e){}
     let geoOk=0, geoFail=0, geoAprox=0;
+    const posicionesPorDireccion=new Map();
+    const claveDireccion=(u)=>[u.domicilio,u.localidad,u.cp].map(v=>(v||'').toString().trim().toLowerCase()).join('|');
     for(let i=0;i<lista.length;i++){
       const u=lista[i];
-      let pos=null;
+      const clave=claveDireccion(u);
+      let pos=posicionesPorDireccion.get(clave)||null;
       try{
-        if(i>0) await new Promise(r=>setTimeout(r, 1100));
-        pos=await geocodePreciseForUser(u);
+        // No repetir consultas para personas que comparten domicilio/localidad/CP.
+        // Se conserva una espera prudente solo para nuevas consultas a Nominatim.
+        if(!pos){
+          if(i>0) await new Promise(r=>setTimeout(r, 1100));
+          pos=await geocodePreciseForUser(u);
+          if(pos) posicionesPorDireccion.set(clave,pos);
+        }
       }catch(e){ console.log('Geocode precise error',e); }
       if(!pos){
         geoFail++;
@@ -12830,7 +12838,7 @@ window.mostrarEnMapaU=async function(query, lista=null){
         }catch(e){}
       }
       try{
-        L.popup().setLatLng(mapU.getCenter()).setContent(`<b>📍 ${query}</b><br/>${lista.length} usuarios<br/>⏳ ${i+1}/${lista.length}... ✅ ${geoOk} exactas | 🟡 ${geoAprox} barrio | ❌ ${geoFail} sin<br/><small>CP→Prov + structured</small>`).openOn(mapU);
+        L.popup().setLatLng(mapU.getCenter()).setContent(`<b>📍 ${query}</b><br/>${lista.length} usuarios<br/>⏳ ${i+1}/${lista.length}... ✅ ${geoOk} exactas | 🟡 ${geoAprox} barrio | ❌ ${geoFail} sin<br/><small>CP→Prov + cache + direcciones agrupadas</small>`).openOn(mapU);
       }catch(e){}
     }
     const texto=lista.slice(0,8).map(u=>{
@@ -13181,5 +13189,5 @@ setTimeout(initUsuarios, 1200);
 
 </script>
 
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a297fef559b94e64',t:'MTc4NjQ1OTIzMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
